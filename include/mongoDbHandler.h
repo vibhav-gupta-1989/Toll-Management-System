@@ -45,7 +45,7 @@ namespace TollMgmtSystem{
 
                     auto builderId = bsoncxx::builder::stream::document{};
                     bsoncxx::v_noabi::document::value doc_valueId = builderId <<
-                     "sourceStationName" << sourceStationName <<
+                        "sourceStationName" << sourceStationName <<
                         "destinationStationName" << destinationStationName <<
                         "vehicleCategory" << it->second << bsoncxx::builder::stream::finalize;
 
@@ -148,26 +148,26 @@ namespace TollMgmtSystem{
 
             json::JSON ShowRoutes(const std::string& sourceStationName, 
                     const std::string& destinationStationName,
-                    std::vector<std::string>&vehicleCategories, std::vector<int>&tolls){
+                    std::vector<std::string>&vehicleCategories, 
+                    std::vector<int>&tolls){
 
                 using namespace bsoncxx::builder::basic;
                 mongocxx::pipeline p{};
                 p.match(make_document(kvp("_id.sourceStationName", sourceStationName),
-                            kvp("_id.destinationStationName", destinationStationName)));
+                    kvp("_id.destinationStationName", destinationStationName)));
                 p.sort(make_document(kvp("toll", 1)));
                 p.limit(3);
 
-                auto cursor = db[routesCollectionName].aggregate(p,
-                        mongocxx::options::aggregate{});
+                auto cursor = db[routesCollectionName].aggregate(p, 
+                    mongocxx::options::aggregate{});
 
                 json::JSON result;
                 result["tollOptions"] = json::Array();
 
                 for(auto doc : cursor){
                     vehicleCategories.push_back(
-                            doc["_id"]["vehicleCategory"].get_string().value.data());
-                    tolls.push_back(
-                            doc["toll"].get_int32().value);
+                        doc["_id"]["vehicleCategory"].get_string().value.data());
+                    tolls.push_back(doc["toll"].get_int32().value);
 
                     result["tollOptions"].append(bsoncxx::to_json(doc));
                 }
@@ -176,17 +176,15 @@ namespace TollMgmtSystem{
             }
 
             bool PurchaseTicket(const std::string& sourceStationName,
-                    const std::string& destinationStationName, const int& userId,
-                    bool payingOnline){
+                    const std::string& destinationStationName, 
+                    const int& userId, bool payingOnline){
 
                 try{
 
                     std::vector<std::string>vehicleCategories;
                     std::vector<int>tolls;
-                    json::JSON routes = ShowRoutes(sourceStationName, 
-                            destinationStationName,
-                            vehicleCategories,
-                            tolls);
+                    json::JSON routes = ShowRoutes(sourceStationName, destinationStationName,
+                        vehicleCategories, tolls);
 
                     int size = routes["tollOptions"].length();
                     if(size == 0)
@@ -201,7 +199,7 @@ namespace TollMgmtSystem{
                         using namespace bsoncxx::builder::basic;
                         mongocxx::pipeline p{};
                         p.match(make_document(kvp("category", vehicleCategories[chosenOption]),
-                                    kvp("userId", userId)));
+                            kvp("userId", userId)));
 
                         auto cursor = db[vehiclesCollectionName].aggregate(p,
                                 mongocxx::options::aggregate{});
@@ -213,14 +211,12 @@ namespace TollMgmtSystem{
                             std::vector<std::string> registrationNumbers;
                             for(auto doc : cursor){
                                 registrationNumbers.push_back(
-                                        doc["_id"]["registrationNumber"].get_string().value.data());
+                                    doc["_id"]["registrationNumber"].get_string().value.data());
                             }
 
-                            int chosenRegistrationNumber = rand() 
-                                % registrationNumbers.size();
+                            int chosenRegistrationNumber = rand() % registrationNumbers.size();
 
                             mongocxx::collection collection = db[ticketsCollectionName];
-
                             auto builder = bsoncxx::builder::stream::document{};
 
                             time_t currTime;
@@ -274,9 +270,8 @@ namespace TollMgmtSystem{
                             tmpInt = tolls[chosenOption];
                             tolls[chosenOption] = tolls[size-1];
                             tolls[size-1] = tmpInt;
-
+                            
                             size--;
-
                         }
                     }
                     return false;
@@ -291,7 +286,6 @@ namespace TollMgmtSystem{
                 using namespace bsoncxx::builder::basic;
 
                 json::JSON result;
-                
                 try{
                     mongocxx::pipeline p{};
 
@@ -317,7 +311,6 @@ namespace TollMgmtSystem{
                         p, mongocxx::options::aggregate{});
 
                     int amount = 0;
-                    
                     if(cursor.begin() != cursor.end()){
                         for(auto doc : cursor){
                             amount += doc["toll"].get_int32().value;
@@ -342,11 +335,11 @@ namespace TollMgmtSystem{
                 mongocxx::pipeline p{};
 
                 p.match(make_document(kvp("sourceStationName", sourceStationName),
-                            kvp("destinationStationName", destinationStationName), 
-                            kvp("registrationNumber", vehicleRegistrationNumber)));
+                    kvp("destinationStationName", destinationStationName), 
+                    kvp("registrationNumber", vehicleRegistrationNumber)));
 
                 auto cursor = db[ticketsCollectionName].aggregate(
-                        p, mongocxx::options::aggregate{});
+                    p, mongocxx::options::aggregate{});
 
                 std::string startTime;
                 bool paidOnline;
@@ -356,7 +349,6 @@ namespace TollMgmtSystem{
 
                 std::vector<std::string>vehicleCategories;
                 std::vector<int>tolls;
-
 
                 if(cursor.begin() != cursor.end()){
                     for(auto doc : cursor){
@@ -425,7 +417,7 @@ namespace TollMgmtSystem{
                                             vehicleRegistrationNumber)));
 
                             cursor = db[vehiclesCollectionName].aggregate(
-                                    p, mongocxx::options::aggregate{});
+                                p, mongocxx::options::aggregate{});
 
                             std::string category;
 
@@ -437,12 +429,15 @@ namespace TollMgmtSystem{
 
                             p = {};
 
-                            p.match(make_document(kvp("_id.sourceStationName", currentStationName), 
-                                        kvp("_id.destinationStationName", destinationStationName),
-                                        kvp("_id.vehicleCategory", category)));
+                            p.match(make_document(kvp("_id.sourceStationName", 
+                                currentStationName), 
+                                kvp("_id.destinationStationName", 
+                                destinationStationName),
+                                kvp("_id.vehicleCategory", 
+                                category)));
 
                             cursor = db[routesCollectionName].aggregate(
-                                    p, mongocxx::options::aggregate{});
+                                p, mongocxx::options::aggregate{});
 
                             int toll;
 
@@ -460,7 +455,6 @@ namespace TollMgmtSystem{
 
                             std::cout << "Vehicle user is along the right path" << std::endl;
                             return true;
-
                         }
                         else
                             std::cout << "Vehicle user is along the right path" << std::endl;
@@ -479,43 +473,37 @@ namespace TollMgmtSystem{
                 auto builderId1 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId1 = builderId1 << "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "vehicleCategory" << "TwoWheeler" << 
-                        bsoncxx::builder::stream::finalize;
+                    "destinationStationName" << "Mathura" <<
+                    "vehicleCategory" << "TwoWheeler" << 
+                    bsoncxx::builder::stream::finalize;
 
-                auto doc_value = 
-                        builder1 << "_id" << doc_valueId1 << 
-                        "toll" << 100 << bsoncxx::builder::stream::finalize;
+                auto doc_value = builder1 << "_id" << doc_valueId1 << "toll" << 100 
+                    << bsoncxx::builder::stream::finalize;
 
                 db["routes"].insert_one(doc_value.view());
 
                 auto builder2 = bsoncxx::builder::stream::document{};
                 auto builderId2 = bsoncxx::builder::stream::document{};
 
-                auto doc_valueId2 = builderId2 << "id" << 0 <<
-                        "stationName" << "Badarpur" << 
-                        bsoncxx::builder::stream::finalize;
+                auto doc_valueId2 = builderId2 << "id" << 0 << "stationName" << "Badarpur" << 
+                    bsoncxx::builder::stream::finalize;
                 
-                doc_value = 
-                        builder2 << "_id" << doc_valueId2 <<
-                        "tellerName" << "Vikas" <<
-                        "tellerId" << 101 <<
-                        "shiftTiming" << "Day" << 
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder2 << "_id" << doc_valueId2 << "tellerName" << "Vikas" <<
+                    "tellerId" << 101 << "shiftTiming" << "Day" << 
+                    bsoncxx::builder::stream::finalize;
+                
                 db["booths"].insert_one(doc_value.view());
                 
                 auto builder3 = bsoncxx::builder::stream::document{};
                 auto builderId3 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId3 = builderId3 << "registrationNumber" << "HR51F5236"
-                                    << bsoncxx::builder::stream::finalize;
+                    << bsoncxx::builder::stream::finalize;
 
-                doc_value = 
-                        builder3 << "_id" << doc_valueId3 << 
-                        "category" << "TwoWheeler" <<
-                        "userId" << 505 <<
-                        "userName" << "Santosh" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder3 << "_id" << doc_valueId3 << "category" << "TwoWheeler" <<
+                    "userId" << 505 << "userName" << "Santosh" << 
+                    bsoncxx::builder::stream::finalize;
+                
                 db["vehicles"].insert_one(doc_value.view());
 
                 time_t currTime;
@@ -530,16 +518,13 @@ namespace TollMgmtSystem{
                 strftime(timeString, 50, "%T", currTm);
 
                 auto builder4 = bsoncxx::builder::stream::document{};
-                doc_value = 
-                        builder4 << "registrationNumber" << "HR51F5236" <<
-                        "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "toll" << 100 <<
-                        "paidOnline" << true <<
-                        "startTime" << timeString << "startDate" << dateString <<
-                        "paymentTime" << timeString << "paymentDate" << dateString <<
-                        "paymentStationName" << "" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder4 << "registrationNumber" << "HR51F5236" <<
+                    "sourceStationName" << "Badarpur" << "destinationStationName" << "Mathura" 
+                    << "toll" << 100 << "paidOnline" << true << "startTime" << 
+                    timeString << "startDate" << dateString << "paymentTime" << 
+                    timeString << "paymentDate" << dateString << "paymentStationName" << "" 
+                    << bsoncxx::builder::stream::finalize;
+                
                 db["tickets"].insert_one(doc_value.view());
 
                 return ValidateTicket("Badarpur", "Mathura", "Badarpur", "HR51F5236");
@@ -555,70 +540,59 @@ namespace TollMgmtSystem{
                 auto builderId1 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId1 = builderId1 << "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "vehicleCategory" << "TwoWheeler" << 
-                        bsoncxx::builder::stream::finalize;
+                    "destinationStationName" << "Mathura" << "vehicleCategory" << 
+                    "TwoWheeler" << bsoncxx::builder::stream::finalize;
 
-                auto doc_value = 
-                        builder1 << "_id" << doc_valueId1 << 
-                        "toll" << 100 << bsoncxx::builder::stream::finalize;
+                auto doc_value = builder1 << "_id" << doc_valueId1 << "toll" << 100 
+                    << bsoncxx::builder::stream::finalize;
 
                 db["routes"].insert_one(doc_value.view());
 
                 auto builder2 = bsoncxx::builder::stream::document{};
                 auto builderId2 = bsoncxx::builder::stream::document{};
                 auto doc_valueId2 = builderId2 << "sourceStationName" << "Faridabad" <<
-                        "destinationStationName" << "Mathura" <<
-                        "vehicleCategory" << "TwoWheeler" << 
-                        bsoncxx::builder::stream::finalize;
+                    "destinationStationName" << "Mathura" << "vehicleCategory" << 
+                    "TwoWheeler" << bsoncxx::builder::stream::finalize;
                 
-                doc_value = builder2 << "_id" << doc_valueId2 << 
-                        "toll" << 50 << bsoncxx::builder::stream::finalize;
+                doc_value = builder2 << "_id" << doc_valueId2 << "toll" << 50 
+                << bsoncxx::builder::stream::finalize;
                 
                 db["routes"].insert_one(doc_value.view());
 
                 auto builder3 = bsoncxx::builder::stream::document{};
                 auto builderId3 = bsoncxx::builder::stream::document{};
 
-                auto doc_valueId3 = builderId3 << "id" << 0 <<
-                        "stationName" << "Badarpur" << 
-                        bsoncxx::builder::stream::finalize;
+                auto doc_valueId3 = builderId3 << "id" << 0 << "stationName" << "Badarpur" << 
+                    bsoncxx::builder::stream::finalize;
                 
-                doc_value = 
-                        builder3 << "_id" << doc_valueId3 <<
-                        "tellerName" << "Vikas" <<
-                        "tellerId" << 101 <<
-                        "shiftTiming" << "Day" << 
+                doc_value = builder3 << "_id" << doc_valueId3 << "tellerName" << "Vikas" <<
+                        "tellerId" << 101 << "shiftTiming" << "Day" << 
                         bsoncxx::builder::stream::finalize;
+
                 db["booths"].insert_one(doc_value.view());
 
                 auto builder4 = bsoncxx::builder::stream::document{};
                 auto builderId4 = bsoncxx::builder::stream::document{};
 
-                auto doc_valueId4 = builderId4 << "id" << 0 <<
-                        "stationName" << "Faridabad" << 
+                auto doc_valueId4 = builderId4 << "id" << 0 << "stationName" << "Faridabad" << 
+                    bsoncxx::builder::stream::finalize;
+                
+                doc_value = builder4 << "_id" << doc_valueId4 << "tellerName" << "Rohit" <<
+                        "tellerId" << 104 << "shiftTiming" << "Day" << 
                         bsoncxx::builder::stream::finalize;
                 
-                doc_value = 
-                        builder4 << "_id" << doc_valueId4 <<
-                        "tellerName" << "Rohit" <<
-                        "tellerId" << 104 <<
-                        "shiftTiming" << "Day" << 
-                        bsoncxx::builder::stream::finalize;
                 db["booths"].insert_one(doc_value.view());
                 
                 auto builder5 = bsoncxx::builder::stream::document{};
                 auto builderId5 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId5 = builderId5 << "registrationNumber" << "HR51F5236"
-                                    << bsoncxx::builder::stream::finalize;
+                    << bsoncxx::builder::stream::finalize;
 
-                doc_value = 
-                        builder5 << "_id" << doc_valueId5 << 
-                        "category" << "TwoWheeler" <<
-                        "userId" << 505 <<
-                        "userName" << "Santosh" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder5 << "_id" << doc_valueId5 << "category" << "TwoWheeler" <<
+                    "userId" << 505 << "userName" << "Santosh" <<
+                    bsoncxx::builder::stream::finalize;
+                
                 db["vehicles"].insert_one(doc_value.view());
 
                 time_t currTime;
@@ -634,16 +608,14 @@ namespace TollMgmtSystem{
                 strftime(timeString, 50, "%T", currTm);
 
                 auto builder6 = bsoncxx::builder::stream::document{};
-                doc_value = 
-                        builder6 << "registrationNumber" << "HR51F5236" <<
-                        "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "toll" << 100 <<
-                        "paidOnline" << true <<
+                doc_value = builder6 << "registrationNumber" << "HR51F5236" <<
+                        "sourceStationName" << "Badarpur" << "destinationStationName" 
+                        << "Mathura" << "toll" << 100 << "paidOnline" << true <<
                         "startTime" << timeString << "startDate" << dateString <<
                         "paymentTime" << timeString << "paymentDate" << dateString <<
                         "paymentStationName" << "" <<
                         bsoncxx::builder::stream::finalize;
+                
                 db["tickets"].insert_one(doc_value.view());
 
                 return ValidateTicket("Badarpur", "Mathura", "Faridabad", "HR51F5236");
@@ -659,43 +631,36 @@ namespace TollMgmtSystem{
                 auto builderId1 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId1 = builderId1 << "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "vehicleCategory" << "TwoWheeler" << 
-                        bsoncxx::builder::stream::finalize;
+                    "destinationStationName" << "Mathura" << "vehicleCategory" 
+                    << "TwoWheeler" << bsoncxx::builder::stream::finalize;
 
-                auto doc_value = 
-                        builder1 << "_id" << doc_valueId1 << 
-                        "toll" << 100 << bsoncxx::builder::stream::finalize;
+                auto doc_value = builder1 << "_id" << doc_valueId1 << "toll" << 100 
+                    << bsoncxx::builder::stream::finalize;
 
                 db["routes"].insert_one(doc_value.view());
 
                 auto builder2 = bsoncxx::builder::stream::document{};
                 auto builderId2 = bsoncxx::builder::stream::document{};
 
-                auto doc_valueId2 = builderId2 << "id" << 0 <<
-                        "stationName" << "Badarpur" << 
-                        bsoncxx::builder::stream::finalize;
+                auto doc_valueId2 = builderId2 << "id" << 0 << "stationName" << "Badarpur" << 
+                    bsoncxx::builder::stream::finalize;
                 
-                doc_value = 
-                        builder2 << "_id" << doc_valueId2 <<
-                        "tellerName" << "Vikas" <<
-                        "tellerId" << 101 <<
-                        "shiftTiming" << "Day" << 
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder2 << "_id" << doc_valueId2 << "tellerName" << "Vikas" <<
+                    "tellerId" << 101 << "shiftTiming" << "Day" << 
+                    bsoncxx::builder::stream::finalize;
+                
                 db["booths"].insert_one(doc_value.view());
                 
                 auto builder3 = bsoncxx::builder::stream::document{};
                 auto builderId3 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId3 = builderId3 << "registrationNumber" << "HR51F5236"
-                                    << bsoncxx::builder::stream::finalize;
+                    << bsoncxx::builder::stream::finalize;
 
-                doc_value = 
-                        builder3 << "_id" << doc_valueId3 << 
-                        "category" << "TwoWheeler" <<
-                        "userId" << 505 <<
-                        "userName" << "Santosh" <<
+                doc_value = builder3 << "_id" << doc_valueId3 << "category" << "TwoWheeler" <<
+                    "userId" << 505 << "userName" << "Santosh" <<
                         bsoncxx::builder::stream::finalize;
+                
                 db["vehicles"].insert_one(doc_value.view());
 
                 time_t currTime;
@@ -711,16 +676,13 @@ namespace TollMgmtSystem{
                 strftime(timeString, 50, "%T", currTm);
 
                 auto builder4 = bsoncxx::builder::stream::document{};
-                doc_value = 
-                        builder4 << "registrationNumber" << "HR51F5236" <<
-                        "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "toll" << 100 <<
-                        "paidOnline" << false <<
-                        "startTime" << timeString << "startDate" << dateString <<
-                        "paymentTime" << "" << "paymentDate" << "" <<
-                        "paymentStationName" << "" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder4 << "registrationNumber" << "HR51F5236" <<
+                    "sourceStationName" << "Badarpur" << "destinationStationName" 
+                    << "Mathura" << "toll" << 100 << "paidOnline" << false <<
+                    "startTime" << timeString << "startDate" << dateString <<
+                    "paymentTime" << "" << "paymentDate" << "" << "paymentStationName" 
+                    << "" << bsoncxx::builder::stream::finalize;
+                
                 db["tickets"].insert_one(doc_value.view());
 
                 return ValidateTicket("Badarpur", "Mathura", "Badarpur", "HR51F5236");
@@ -736,43 +698,36 @@ namespace TollMgmtSystem{
                 auto builderId1 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId1 = builderId1 << "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "vehicleCategory" << "TwoWheeler" << 
-                        bsoncxx::builder::stream::finalize;
+                    "destinationStationName" << "Mathura" << "vehicleCategory" << "TwoWheeler"
+                    << bsoncxx::builder::stream::finalize;
 
-                auto doc_value = 
-                        builder1 << "_id" << doc_valueId1 << 
-                        "toll" << 100 << bsoncxx::builder::stream::finalize;
+                auto doc_value = builder1 << "_id" << doc_valueId1 << "toll" << 100 
+                    << bsoncxx::builder::stream::finalize;
 
                 db["routes"].insert_one(doc_value.view());
 
                 auto builder2 = bsoncxx::builder::stream::document{};
                 auto builderId2 = bsoncxx::builder::stream::document{};
 
-                auto doc_valueId2 = builderId2 << "id" << 0 <<
-                        "stationName" << "Badarpur" << 
-                        bsoncxx::builder::stream::finalize;
+                auto doc_valueId2 = builderId2 << "id" << 0 << "stationName" << 
+                    "Badarpur" << bsoncxx::builder::stream::finalize;
                 
-                doc_value = 
-                        builder2 << "_id" << doc_valueId2 <<
-                        "tellerName" << "Vikas" <<
-                        "tellerId" << 101 <<
-                        "shiftTiming" << "Day" << 
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder2 << "_id" << doc_valueId2 << "tellerName" << "Vikas" <<
+                    "tellerId" << 101 << "shiftTiming" << "Day" <<  
+                    bsoncxx::builder::stream::finalize;
+                
                 db["booths"].insert_one(doc_value.view());
                 
                 auto builder3 = bsoncxx::builder::stream::document{};
                 auto builderId3 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId3 = builderId3 << "registrationNumber" << "HR51F5236"
-                                    << bsoncxx::builder::stream::finalize;
+                    << bsoncxx::builder::stream::finalize;
 
-                doc_value = 
-                        builder3 << "_id" << doc_valueId3 << 
-                        "category" << "TwoWheeler" <<
-                        "userId" << 505 <<
-                        "userName" << "Santosh" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder3 << "_id" << doc_valueId3 << "category" << "TwoWheeler" <<
+                    "userId" << 505 << "userName" << "Santosh" <<
+                    bsoncxx::builder::stream::finalize;
+                
                 db["vehicles"].insert_one(doc_value.view());
 
                 time_t currTime;
@@ -788,16 +743,13 @@ namespace TollMgmtSystem{
                 strftime(timeString, 50, "%T", currTm);
 
                 auto builder4 = bsoncxx::builder::stream::document{};
-                doc_value = 
-                        builder4 << "registrationNumber" << "HR51F5236" <<
-                        "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "toll" << 100 <<
-                        "paidOnline" << true <<
-                        "startTime" << timeString << "startDate" << dateString <<
-                        "paymentTime" << timeString << "paymentDate" << dateString <<
-                        "paymentStationName" << "" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder4 << "registrationNumber" << "HR51F5236" <<
+                    "sourceStationName" << "Badarpur" << "destinationStationName" 
+                    << "Mathura" << "toll" << 100 << "paidOnline" << true <<
+                    "startTime" << timeString << "startDate" << dateString <<
+                    "paymentTime" << timeString << "paymentDate" << dateString <<
+                    "paymentStationName" << "" << bsoncxx::builder::stream::finalize;
+
                 db["tickets"].insert_one(doc_value.view());
 
                 return ValidateTicket("Badarpur", "Mathura", "Badarpur", "HR51F5236");
@@ -813,29 +765,24 @@ namespace TollMgmtSystem{
                 auto builderId1 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId1 = builderId1 << "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "vehicleCategory" << "TwoWheeler" << 
-                        bsoncxx::builder::stream::finalize;
+                    "destinationStationName" << "Mathura" << "vehicleCategory" 
+                    << "TwoWheeler" << bsoncxx::builder::stream::finalize;
 
-                auto doc_value = 
-                        builder1 << "_id" << doc_valueId1 << 
-                        "toll" << 100 << bsoncxx::builder::stream::finalize;
+                auto doc_value = builder1 << "_id" << doc_valueId1 << 
+                    "toll" << 100 << bsoncxx::builder::stream::finalize;
 
                 db["routes"].insert_one(doc_value.view());
 
                 auto builder2 = bsoncxx::builder::stream::document{};
                 auto builderId2 = bsoncxx::builder::stream::document{};
 
-                auto doc_valueId2 = builderId2 << "id" << 0 <<
-                        "stationName" << "Badarpur" << 
-                        bsoncxx::builder::stream::finalize;
+                auto doc_valueId2 = builderId2 << "id" << 0 << "stationName" << "Badarpur" << 
+                    bsoncxx::builder::stream::finalize;
                 
-                doc_value = 
-                        builder2 << "_id" << doc_valueId2 <<
-                        "tellerName" << "Vikas" <<
-                        "tellerId" << 101 <<
-                        "shiftTiming" << "Day" << 
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder2 << "_id" << doc_valueId2 << "tellerName" << "Vikas" <<
+                    "tellerId" << 101 << "shiftTiming" << "Day" << 
+                    bsoncxx::builder::stream::finalize;
+                
                 db["booths"].insert_one(doc_value.view());
                 
                 auto builder3 = bsoncxx::builder::stream::document{};
@@ -844,12 +791,10 @@ namespace TollMgmtSystem{
                 auto doc_valueId3 = builderId3 << "registrationNumber" << "HR51F5236"
                                     << bsoncxx::builder::stream::finalize;
 
-                doc_value = 
-                        builder3 << "_id" << doc_valueId3 << 
-                        "category" << "TwoWheeler" <<
-                        "userId" << 505 <<
-                        "userName" << "Santosh" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder3 << "_id" << doc_valueId3 << "category" << 
+                    "TwoWheeler" << "userId" << 505 << "userName" << "Santosh" <<
+                    bsoncxx::builder::stream::finalize;
+                
                 db["vehicles"].insert_one(doc_value.view());
 
                 time_t currTime;
@@ -865,16 +810,13 @@ namespace TollMgmtSystem{
                 strftime(timeString, 50, "%T", currTm);
 
                 auto builder4 = bsoncxx::builder::stream::document{};
-                doc_value = 
-                        builder4 << "registrationNumber" << "HR51F5236" <<
-                        "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "toll" << 100 <<
-                        "paidOnline" << false <<
-                        "startTime" << timeString << "startDate" << dateString <<
-                        "paymentTime" << "" << "paymentDate" << "" <<
-                        "paymentStationName" << "" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder4 << "registrationNumber" << "HR51F5236" <<
+                    "sourceStationName" << "Badarpur" << "destinationStationName" 
+                    << "Mathura" << "toll" << 100 << "paidOnline" << false <<
+                    "startTime" << timeString << "startDate" << dateString <<
+                    "paymentTime" << "" << "paymentDate" << "" <<
+                    "paymentStationName" << "" << bsoncxx::builder::stream::finalize;
+                
                 db["tickets"].insert_one(doc_value.view());
 
                 return ValidateTicket("Badarpur", "Mathura", "Badarpur", "HR51F5236");
@@ -890,70 +832,59 @@ namespace TollMgmtSystem{
                 auto builderId1 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId1 = builderId1 << "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "vehicleCategory" << "TwoWheeler" << 
-                        bsoncxx::builder::stream::finalize;
+                    "destinationStationName" << "Mathura" << "vehicleCategory" 
+                    << "TwoWheeler" << bsoncxx::builder::stream::finalize;
 
-                auto doc_value = 
-                        builder1 << "_id" << doc_valueId1 << 
-                        "toll" << 100 << bsoncxx::builder::stream::finalize;
+                auto doc_value = builder1 << "_id" << doc_valueId1 << 
+                    "toll" << 100 << bsoncxx::builder::stream::finalize;
 
                 db["routes"].insert_one(doc_value.view());
 
                 auto builder2 = bsoncxx::builder::stream::document{};
                 auto builderId2 = bsoncxx::builder::stream::document{};
                 auto doc_valueId2 = builderId2 << "sourceStationName" << "Rohini" <<
-                        "destinationStationName" << "Mathura" <<
-                        "vehicleCategory" << "TwoWheeler" << 
-                        bsoncxx::builder::stream::finalize;
+                    "destinationStationName" << "Mathura" << "vehicleCategory" 
+                    << "TwoWheeler" << bsoncxx::builder::stream::finalize;
                 
                 doc_value = builder2 << "_id" << doc_valueId2 << 
-                        "toll" << 200 << bsoncxx::builder::stream::finalize;
+                    "toll" << 200 << bsoncxx::builder::stream::finalize;
                 
                 db["routes"].insert_one(doc_value.view());
 
                 auto builder3 = bsoncxx::builder::stream::document{};
                 auto builderId3 = bsoncxx::builder::stream::document{};
 
-                auto doc_valueId3 = builderId3 << "id" << 0 <<
-                        "stationName" << "Badarpur" << 
-                        bsoncxx::builder::stream::finalize;
+                auto doc_valueId3 = builderId3 << "id" << 0 << "stationName" << "Badarpur" << 
+                    bsoncxx::builder::stream::finalize;
                 
-                doc_value = 
-                        builder3 << "_id" << doc_valueId3 <<
-                        "tellerName" << "Vikas" <<
-                        "tellerId" << 101 <<
-                        "shiftTiming" << "Day" << 
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder3 << "_id" << doc_valueId3 << "tellerName" << "Vikas" <<
+                    "tellerId" << 101 << "shiftTiming" << "Day" << 
+                    bsoncxx::builder::stream::finalize;
+                
                 db["booths"].insert_one(doc_value.view());
                 
                 auto builder4 = bsoncxx::builder::stream::document{};
                 auto builderId4 = bsoncxx::builder::stream::document{};
 
-                auto doc_valueId4 = builderId4 << "id" << 0 <<
-                        "stationName" << "Rohini" << 
-                        bsoncxx::builder::stream::finalize;
+                auto doc_valueId4 = builderId4 << "id" << 0 << "stationName" << "Rohini" << 
+                    bsoncxx::builder::stream::finalize;
                 
-                doc_value = 
-                        builder4 << "_id" << doc_valueId4 <<
-                        "tellerName" << "Rohit" <<
-                        "tellerId" << 105 <<
-                        "shiftTiming" << "Day" << 
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder4 << "_id" << doc_valueId4 << "tellerName" << "Rohit" <<
+                    "tellerId" << 105 << "shiftTiming" << "Day" << 
+                    bsoncxx::builder::stream::finalize;
+                
                 db["booths"].insert_one(doc_value.view());
 
                 auto builder5 = bsoncxx::builder::stream::document{};
                 auto builderId5 = bsoncxx::builder::stream::document{};
 
                 auto doc_valueId5 = builderId5 << "registrationNumber" << "HR51F5236"
-                                    << bsoncxx::builder::stream::finalize;
+                    << bsoncxx::builder::stream::finalize;
 
-                doc_value = 
-                        builder5 << "_id" << doc_valueId5 << 
-                        "category" << "TwoWheeler" <<
-                        "userId" << 505 <<
-                        "userName" << "Santosh" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder5 << "_id" << doc_valueId5 << "category" << "TwoWheeler" 
+                    << "userId" << 505 << "userName" << "Santosh" <<
+                    bsoncxx::builder::stream::finalize;
+                
                 db["vehicles"].insert_one(doc_value.view());
 
                 time_t currTime;
@@ -969,16 +900,13 @@ namespace TollMgmtSystem{
                 strftime(timeString, 50, "%T", currTm);
 
                 auto builder6 = bsoncxx::builder::stream::document{};
-                doc_value = 
-                        builder6 << "registrationNumber" << "HR51F5236" <<
-                        "sourceStationName" << "Badarpur" <<
-                        "destinationStationName" << "Mathura" <<
-                        "toll" << 100 <<
-                        "paidOnline" << true <<
-                        "startTime" << timeString << "startDate" << dateString <<
-                        "paymentTime" << timeString << "paymentDate" << dateString <<
-                        "paymentStationName" << "" <<
-                        bsoncxx::builder::stream::finalize;
+                doc_value = builder6 << "registrationNumber" << "HR51F5236" <<
+                    "sourceStationName" << "Badarpur" << "destinationStationName" 
+                    << "Mathura" << "toll" << 100 << "paidOnline" << true <<
+                    "startTime" << timeString << "startDate" << dateString <<
+                    "paymentTime" << timeString << "paymentDate" << dateString <<
+                    "paymentStationName" << "" << bsoncxx::builder::stream::finalize;
+                
                 db["tickets"].insert_one(doc_value.view());
 
                 return ValidateTicket("Badarpur", "Mathura", "Rohini", "HR51F5236");
@@ -992,7 +920,7 @@ namespace TollMgmtSystem{
             mongocxx::database db;
 
             void getDateTime(struct tm& dateTime, std::string& startDate,
-                    std::string& startTime){
+                std::string& startTime){
 
                 char* startDateDup = strdup(startDate.c_str());
                 char* str = strtok(startDateDup, " ,");
@@ -1036,10 +964,7 @@ namespace TollMgmtSystem{
                 dateTime.tm_min = atoi(str);
 
                 str = strtok(NULL, ":");
-                dateTime.tm_sec = atoi(str);
-
-                                  
+                dateTime.tm_sec = atoi(str);                                  
             }
-
     };
 }

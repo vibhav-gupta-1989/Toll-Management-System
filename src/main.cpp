@@ -3,8 +3,6 @@
 #include "httpServer.h"
 #include "served/multiplexer.hpp"
 
-
-
 int main() {
 
     served::multiplexer multiplexer;

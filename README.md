@@ -6,7 +6,7 @@ This project has been developed using C++ and mongocxx/mongoc libraries. MongoDb
 
 ## Setup
 
-1. Download the repository code.
+1. Download code from the repository.
 2. Install mongocxx/mongoc libraries. Follow instructions from https://mongocxx.org/mongocxx-v3/installation/macos/.
 3. Copy server and SimpleJSON source files from the links below and place them in a folder named lib in the root.
 	* https://github.com/evanugarte/served.git

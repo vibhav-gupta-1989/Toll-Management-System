@@ -25,3 +25,4 @@ Build from Makefile as `make all`. This will build 2 executables. **main** for s
 
 1. [Working with MongoDB in C++ | mongocxx tutorial](https://www.youtube.com/watch?v=yPoH5cBJzkk)
 2. [Creating a Simple REST API in C++ | mongocxx tutorial pt. 2](https://www.youtube.com/watch?v=NC7IGLm69Ts)
+3. [Mongocxx aggregation examples](https://github.com/mongodb/mongo-cxx-driver/blob/master/examples/mongocxx/mongodb.com/aggregation_examples.cpp)

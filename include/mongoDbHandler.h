@@ -439,7 +439,7 @@ namespace TollMgmtSystem{
                             cursor = db[routesCollectionName].aggregate(
                                 p, mongocxx::options::aggregate{});
 
-                            int toll;
+                            int toll = 0;
 
                             if(cursor.begin() != cursor.end()){
                                 for(auto doc : cursor){
@@ -461,6 +461,7 @@ namespace TollMgmtSystem{
                             return true;
                     }
                 }
+                return false;
             }
 
             bool ValidateTest1(){
